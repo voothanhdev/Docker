@@ -1,0 +1,8 @@
+#!/bin/bash
+version="$1"
+if [ -n "${version}" ]; then
+    version="-${version}"
+fi
+curl -o m2 "https://files.magerun.net/n98-magerun2${version}.phar";
+chmod +x m2
+mv m2 /usr/local/bin/

@@ -1,0 +1,13 @@
+#!/bin/sh
+
+mkdir -p /var/lib/varnish/`hostname` && chown nobody /var/lib/varnish/`hostname`
+
+varnishd -F -s "malloc,256M" \
+  -a :6081 \
+  -T localhost:6082 \
+  -f /etc/varnish/default.vcl \
+  -p default_ttl=3600 -p default_grace=3600
+
+sleep 1
+
+exec "$@"

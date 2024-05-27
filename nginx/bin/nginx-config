@@ -1,0 +1,13 @@
+#!/bin/bash
+[ -z "$1" ] && printf "Usage:\n\t nginx-config <KEY>=<VALUE> [<KEY2>=<VALUE2> ...]\n" && exit
+
+for item in "$@"
+do
+    mapfile -t item < <(echo "${item}" | tr '=' "\n")
+	configName=$(echo "${item[0]}" | tr '[:upper:]' '[:lower:]')
+	configValue=${item[1]}
+
+	sed -i "/${configName}/d" /etc/nginx/conf.d/zz-docker.conf
+	printf "%s\t%s;\n" "${configName}" "${configValue}" >> /etc/nginx/conf.d/zz-docker.conf
+	sed -i '/^$/d' /etc/nginx/conf.d/zz-docker.conf
+done

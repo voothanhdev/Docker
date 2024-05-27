@@ -1,0 +1,11 @@
+#!/bin/bash
+for item in "$@"
+do
+	mapfile -t item < <(echo "${item}" | tr '=' "\n")
+	configName=$(echo "${item[0]}" | tr '[:upper:]' '[:lower:]')
+	configValue=${item[1]}
+
+	sed -i "/${configName}/d" /usr/local/etc/php-fpm.d/zz-docker.conf
+	printf "\n%s = %s" "${configName}" "${configValue}" >> /usr/local/etc/php-fpm.d/zz-docker.conf
+	sed -i '/^$/d' /usr/local/etc/php-fpm.d/zz-docker.conf
+done

@@ -1,0 +1,46 @@
+#!/bin/bash
+set -e
+configs=$(echo "${PHP_CONFIG}" | tr '[:upper:]' '[:lower:]')
+pools=$(echo "${FPM_POOL}" | tr '[:upper:]' '[:lower:]')
+moduleEnable=$(echo "${MODULE_ENABLE}" | tr '[:upper:]' '[:lower:]')
+moduleDisable=$(echo "${MODULE_DISABLE}" | tr '[:upper:]' '[:lower:]')
+
+if [ -n "${moduleEnable}" ]; then
+    php-enable "${moduleEnable}"
+fi
+
+if [ -n "${moduleDisable}" ]; then
+    php-enable "${moduleDisable}"
+fi
+
+if [ -n "${configs}" ]; then
+	configs=( "${configs}" )
+	for item in "${configs[@]}"
+	do
+		mapfile -t item < <(echo "${item}" | tr '=' "\n")
+
+	    configName=${item[0]}
+	    configValue=${item[1]}
+
+	    sed -i "/${configName}/d" /usr/local/etc/php/conf.d/zz-docker.ini
+		printf "\n%s = %s" "${configName}" "${configValue}" >> /usr/local/etc/php/conf.d/zz-docker.ini
+	    sed -i '/^$/d' /usr/local/etc/php/conf.d/zz-docker.ini
+	done
+fi
+
+if [ -n "${pools}" ]; then
+	pools=( "${pools}" )
+	for item in "${pools[@]}"
+	do
+		mapfile -t item < <(echo "${item}" | tr '=' "\n")
+
+	    configName=$(echo "${item[0]}" | tr '[:upper:]' '[:lower:]')
+	    configValue=${item[1]}
+
+	    sed -i "/${configName}/d" /usr/local/etc/php-fpm.d/zz-docker.conf
+        printf "\n%s = %s" "${configName}" "${configValue}" >> /usr/local/etc/php-fpm.d/zz-docker.conf
+        sed -i '/^$/d' /usr/local/etc/php-fpm.d/zz-docker.conf
+	done
+fi
+
+exec "$@"

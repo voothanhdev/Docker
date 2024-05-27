@@ -1,0 +1,15 @@
+#!/bin/bash
+if [ -z "$1" ]; then
+    printf "Usage:\n\t pconfig <KEY>=<VALUE> [<KEY2>=<VALUE2> ...]\n" && exit
+fi
+
+for item in "$@"
+do
+	mapfile -t item < <(echo "${item}" | tr '=' "\n")
+	configName=$(echo "${item[0]}" | tr '[:upper:]' '[:lower:]')
+	configValue=${item[1]}
+
+	sed -i "/${configName}/d" /usr/local/etc/php/conf.d/zz-docker.ini
+	printf "\n%s = %s" "${configName}" "${configValue}" >> /usr/local/etc/php/conf.d/zz-docker.ini
+	sed -i '/^$/d' /usr/local/etc/php/conf.d/zz-docker.ini
+done

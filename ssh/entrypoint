@@ -1,0 +1,18 @@
+#!/bin/sh
+set -e
+
+chmod -R 700 /home/www/.ssh
+chmod 600 /home/www/.ssh/*
+chmod -R 700 /home/www/.ssh/pems
+chmod 600 /home/www/.ssh/pems/*
+chmod 644 /home/www/.ssh/*.pub
+
+eval `ssh-agent -s`
+
+for file in /home/www/.ssh/pems/*.pem; do
+    if [ -f "$file" ]; then
+        ssh-add "$file"
+    fi
+done
+
+exec "$@"

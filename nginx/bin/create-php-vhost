@@ -1,0 +1,375 @@
+#!/bin/bash
+########################################################################################################################
+### Notification #######################################################################################################
+########################################################################################################################
+FMT_RED=$(printf '\033[31m')
+FMT_GREEN=$(printf '\033[32m')
+FMT_YELLOW=$(printf '\033[33m')
+FMT_BLUE=$(printf '\033[34m')
+FMT_BOLD=$(printf '\033[1m')
+FMT_RESET=$(printf '\033[0m')
+
+msgError() {
+    if [ -n "$2" ];then
+        printf '\r%sError: %s%s\n' "${FMT_BOLD}${FMT_RED}" "$1" "$FMT_RESET" >&2
+    else
+        printf '%sError: %s%s\n' "${FMT_BOLD}${FMT_RED}" "$1" "$FMT_RESET" >&2
+    fi
+}
+
+msgSuccess() {
+    if [ -n "$2" ];then
+        printf '\r%s%s%s\n' "${FMT_BOLD}${FMT_GREEN}" "$1" "$FMT_RESET" >&2
+    else
+        printf '%s%s%s\n' "${FMT_BOLD}${FMT_GREEN}" "$1" "$FMT_RESET" >&2
+    fi
+}
+
+
+########################################################################################################################
+### DEFAULT VALUES #####################################################################################################
+########################################################################################################################
+SERVER_NAME_DEFAULT=localhost
+VARNISH_BE_PORT=8080
+VARNISH_PORT_DEFAULT=6081
+PHP_PORT_DEFAULT=9000
+PHP_DEFAULT=php
+
+FOLDER=
+VARNISH=
+VARNISH_PORT=6081
+SERVER_NAME=
+HTTPS=true
+PHP_SERVER="${PHP_DEFAULT}"
+PHP_PORT="${PHP_PORT_DEFAULT}"
+
+
+########################################################################################################################
+### FILE PATHS #########################################################################################################
+########################################################################################################################
+CONFIG_PATH=/etc/nginx/conf.d/
+
+
+########################################################################################################################
+### OPTION CHOICE VALUES ###############################################################################################
+########################################################################################################################
+BOOL_TRUE=true
+BOOL_FALSE=false
+
+
+########################################################################################################################
+### OPTION KEYS ########################################################################################################
+########################################################################################################################
+OPTION_FOLDER="--folder"
+OPTION_VARNISH="--varnish-host"
+OPTION_VARNISH_PORT="--varnish-port"
+OPTION_SERVER_NAME="--server-name"
+OPTION_HTTPS="--https"
+OPTION_PHP="--php"
+OPTION_PHP_PORT="--php-port"
+
+
+########################################################################################################################
+### TEMPLATES ##########################################################################################################
+########################################################################################################################
+SSL_PORT="443 ssl"
+
+SSL_PROXY="
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header X-Forwarded-Port 443;
+        proxy_set_header X-Secure on;
+"
+
+SSL_TEMPLATE="
+    ssl_certificate /etc/nginx/ssl/%s.crt;
+    ssl_certificate_key /etc/nginx/ssl/%s.key;
+"
+
+REAL_IP_TEMPLATE="
+    set_real_ip_from   127.0.0.1;
+    real_ip_header     X-Forwarded-For;
+    real_ip_recursive  on;
+"
+
+PHP_LOCATION_ROOT_TEMPLATE="
+    location / {
+        try_files \$uri \$uri/ /index.php\$is_args\$args;
+    }
+"
+
+## S1   Backend Server Name
+PHP_LOCATION_TEMPLATE="
+    location ~ \.php\$ {
+        try_files \$uri =404;
+        fastcgi_split_path_info ^(.+\.php)(/.+)\$;
+        fastcgi_pass %s;
+        fastcgi_index index.php;
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
+        fastcgi_param PATH_INFO \$fastcgi_path_info;
+    }
+"
+
+HT_LOCATION_TEMPLATE="
+    location ~ /\.ht {
+        deny all;
+    }
+"
+
+## S1   Backend Server Name
+## S2   PHP Server
+## S3   PHP Port
+PHP_BE_TEMPLATE="
+upstream %s {
+    server %s:%s;
+}
+"
+
+## S1   Listen port
+## S2   Server name
+## S3   Root folder
+## S4   Real Ip config
+## S5   SSL config
+## S6   PHP Location Template
+PHP_SERVER_TEMPLATE="
+server {
+    listen %s;
+
+    server_name %s;
+
+    root %s;
+
+    index index.php;
+
+    # Add cors
+    set \$origin '\$http_origin';
+    add_header 'Access-Control-Allow-Origin' '\$origin' always;
+    add_header Access-Control-Allow-Methods 'GET, POST, PATCH, PUT, DELETE, OPTIONS' always;
+    add_header 'Access-Control-Allow-Headers' 'Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Requested-With,X-Cache-Hash,Store' always;
+    add_header Access-Control-Expose-Headers 'Content-Length,Content-Range' always;
+    add_header Access-Control-Allow-Credentials 'true' always;
+    %s%s
+    ${PHP_LOCATION_ROOT_TEMPLATE}
+    %s
+    ${HT_LOCATION_TEMPLATE}
+}
+"
+
+## S1   Listen port
+## S2   Server name
+## S3   SSL config
+## S4   Proxy pass
+## S5   SSL proxy
+FORWARD_SERVER_TEMPLATE="
+server {
+    listen %s;
+
+    server_name %s;
+    %s
+    location / {
+        proxy_pass %s;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        %s
+        proxy_redirect off;
+    }
+}
+"
+
+## S1   Server name
+## S2   Server name
+AUTO_HTTPS_SERVER_TEMPLATE="
+server {
+    listen 80;
+
+    server_name %s;
+
+    return 301 https://%s\$request_uri;
+}
+"
+
+########################################################################################################################
+### Command Description ################################################################################################
+########################################################################################################################
+function help() {
+    printf "Usage: Create new php vhost.
+        vhost [<option>=<value> ...]
+
+    Options:
+        %-40srequired\t\t\tRoot folder. Default: %s
+        %-40srequired\t\t\tUse https (%s / %s). Default: %s
+        %-40soptional\t\t\tVarnish host (Empty is not use varnish)
+        %-40soptional\t\t\tVarnish port. Default: %s
+        %-40soptional\t\t\tPHP server. Default: %s
+        %-40soptional\t\t\tPHP port. Default: %s
+        %-40soptional\t\t\tServer name. Default: %s
+        -h, --help%-38s\t\t\tDisplay this help message
+    " "${OPTION_FOLDER}" "${ROOT_FOLDER}" \
+    "${OPTION_HTTPS}" "${BOOL_TRUE}" "${BOOL_FALSE}" "${HTTPS}" \
+    "${OPTION_VARNISH}" \
+    "${OPTION_VARNISH_PORT}"  "${VARNISH_PORT_DEFAULT}" \
+    "${OPTION_PHP}" "${PHP_DEFAULT}" \
+    "${OPTION_PHP_PORT}" "${PHP_PORT_DEFAULT}" \
+    "${OPTION_SERVER_NAME}" "${SERVER_NAME_DEFAULT}" \
+    " "
+}
+
+#
+## $1 value
+## $2 Field
+#
+function checkBoolean() {
+    if [ "$1" != "$BOOL_TRUE" ] || [ "$1" != "$BOOL_FALSE" ]; then
+        return
+    else
+        msgError "$2 is invalid value.\n" && help && exit
+    fi
+}
+
+
+#
+## Prepare command options to variables
+#
+function mapVariables() {
+    for item in "$@"
+    do
+        mapVariable "$item"
+    done
+
+    if [ -z "$FOLDER" ]; then
+        FOLDER="${ROOT_FOLDER}"
+    fi
+
+    if [ -z "$SERVER_NAME" ]; then
+        SERVER_NAME="${SERVER_NAME_DEFAULT}"
+    fi
+
+    if [ -z "${PHP_PORT}" ]; then
+        PHP_PORT="${PHP_PORT_DEFAULT}"
+    fi
+
+    if [ -z "${VARNISH_PORT}" ]; then
+        VARNISH_PORT="${VARNISH_PORT_DEFAULT}"
+    fi
+}
+
+#
+## Prepare command options to variables
+## $1 KEY=VALUE
+#
+function mapVariable() {
+    local option
+    local value
+
+    option=$(echo "$1" | tr "=" " " | awk '{print $1}')
+    value=$(echo "$1" | tr "=" " " | awk '{print $2}')
+
+    case $option in
+        "${OPTION_FOLDER}")
+            FOLDER="$value"
+            ;;
+        "${OPTION_PHP}")
+            PHP_SERVER="$value"
+            ;;
+        "${OPTION_PHP_PORT}")
+            PHP_PORT="$value"
+            ;;
+        "${OPTION_VARNISH}")
+            VARNISH="$value"
+            ;;
+        "${OPTION_VARNISH_PORT}")
+            VARNISH_PORT="$value"
+            ;;
+        "${OPTION_SERVER_NAME}")
+            SERVER_NAME="$value"
+            ;;
+        "${OPTION_HTTPS}")
+            lower=$(echo "$value" | tr '[:upper:]' '[:lower:]')
+            checkBoolean "$lower" "HTTPS"
+            HTTPS="$lower"
+            ;;
+        "--help")
+            help && exit
+            ;;
+        "-h")
+            help && exit
+            ;;
+        *)
+            msgError "Option \`${option}\` doesn't exists\n" && help && exit
+            ;;
+    esac
+}
+
+#
+## Generate auto switch to https config
+#
+function autoHttps() {
+    if [ "$HTTPS" = "$BOOL_TRUE" ]; then
+        printf "\n${AUTO_HTTPS_SERVER_TEMPLATE}\n" "$SERVER_NAME" "$SERVER_NAME" >> "${CONFIG_PATH}${SERVER_NAME}.conf"
+        create-ssl-key "$SERVER_NAME"
+    fi
+}
+
+
+#
+## Generate server template
+#
+generatePhpServer() {
+    port=80
+    ssl=""
+
+    printf "${PHP_BE_TEMPLATE}" "${SERVER_NAME}-backend" "${PHP_SERVER}" "${PHP_PORT}" > "${CONFIG_PATH}${SERVER_NAME}.conf"
+
+    if [ "$HTTPS" = "$BOOL_TRUE" ]; then
+        port="${SSL_PORT}"
+        ssl="$(printf "${SSL_TEMPLATE}" "${SERVER_NAME}" "${SERVER_NAME}")"
+    fi
+
+    phpLocaltion="$(printf "${PHP_LOCATION_TEMPLATE}" "${SERVER_NAME}-backend")"
+
+    printf "${PHP_SERVER_TEMPLATE}" "${port}" "${SERVER_NAME}" "${FOLDER}" "" "${ssl}" "${phpLocaltion}" >> "${CONFIG_PATH}${SERVER_NAME}.conf"
+}
+
+
+#
+## Generate server template with varnish
+#
+function generatePhpVarnishServer() {
+    varnish="${VARNISH}:${VARNISH_PORT}"
+
+    if [[ "$varnish" != "http"* ]]; then
+        varnish="http://${varnish}"
+    fi
+
+    printf "${PHP_BE_TEMPLATE}" "${SERVER_NAME}-backend" "${PHP_SERVER}" "${PHP_PORT}" > "${CONFIG_PATH}${SERVER_NAME}.conf"
+    printf "\n\n${PHP_SERVER_TEMPLATE}" "${VARNISH_BE_PORT}" "${SERVER_NAME}" "${FOLDER}" "${REAL_IP_TEMPLATE}" "" "${SERVER_NAME}-backend" >> "${CONFIG_PATH}${SERVER_NAME}.conf"
+
+    if [ "$HTTPS" = "$BOOL_TRUE" ]; then
+        ssl="$(printf "${SSL_TEMPLATE}" "${SERVER_NAME}" "${SERVER_NAME}")"
+
+        printf "\n\n${FORWARD_SERVER_TEMPLATE}" "${SSL_PORT}" "${SERVER_NAME}" "${ssl}" "${varnish}" "${SSL_PROXY}" >> "${CONFIG_PATH}${SERVER_NAME}.conf"
+    fi
+}
+
+
+#
+## Execute
+#
+function execute() {
+    if [ -z "$VARNISH" ]; then
+        generatePhpServer
+    else
+        generatePhpVarnishServer
+    fi
+
+    autoHttps
+}
+
+
+mapVariables "$@"
+execute
+nginx -s reload
+
+msgSuccess "Create V-Host \`${SERVER_NAME}\` successful!"

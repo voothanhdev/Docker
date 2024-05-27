@@ -1,0 +1,25 @@
+#!/bin/bash
+for ext in "$@"; do
+    if [[ -f "/usr/local/etc/php/conf.d/docker-php-ext-$ext.ini" ]]; then
+        if [ "$ext" == 'xdebug' ]; then
+            if [ -n "${XDEBUG_HOST}" ]; then
+                hostIp="${XDEBUG_HOST}"
+            else
+                hostIp=$(ip route | awk 'NR==1 {print $3}') # Get current ip address
+            fi
+
+            if [[ -f "/usr/local/etc/php/conf.d/z-xdebug.ini" ]]; then
+                sed -i "/xdebug.remote_host/d" /usr/local/etc/php/conf.d/z-xdebug.ini
+                printf "\nxdebug.remote_host=%s" "${hostIp}" >>/usr/local/etc/php/conf.d/z-xdebug.ini
+                sed -i '/^$/d' /usr/local/etc/php/conf.d/z-xdebug.ini
+            else
+                sed -i "/xdebug.client_host/d" /usr/local/etc/php/conf.d/z-xdebug3.ini
+                printf "\nxdebug.client_host=%s" "${hostIp}" >>/usr/local/etc/php/conf.d/z-xdebug3.ini
+                sed -i '/^$/d' /usr/local/etc/php/conf.d/z-xdebug3.ini
+            fi
+        fi
+
+        sed -i -e 's/^;zend_extension/\zend_extension/g' "/usr/local/etc/php/conf.d/docker-php-ext-$ext.ini"
+        printf "%s Enabled.\n" "$ext"
+    fi
+done

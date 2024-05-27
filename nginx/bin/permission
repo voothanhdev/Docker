@@ -1,0 +1,80 @@
+#!/bin/bash
+set -e
+
+##
+# Show count up
+# param $1 waiting message
+##
+spin() {
+    i=1
+    while true; do
+        sleep 1
+        printf "\r$1: %d" ${i}
+        i=$((i + 1))
+        wait
+    done
+}
+
+PROJECT_FOLDER="$1"
+OWN_USER=www
+OWN_GROUP=www-data
+
+function help()
+{
+    printf "Usage: Update permission of project file and folder.
+        permission <project path>
+
+    Options:
+        -h, --help%-38s\t\t\tDisplay this help message
+    " " "
+}
+
+if [ -z "${PROJECT_FOLDER}" ]; then
+    PROJECT_FOLDER="${ROOT_PROJECT}"
+fi
+
+if [ ! -d "${PROJECT_FOLDER}" ]; then
+    printf "\%s does not a directory!" "${PROJECT_FOLDER}" && exit
+fi
+
+spin 'Running fix permission' &
+pid=$!
+
+chown -R "${OWN_USER}":"${OWN_GROUP}" "${PROJECT_FOLDER}"
+if [ -d "${PROJECT_FOLDER}/var" ]; then
+    find "${PROJECT_FOLDER}/var" -type f -exec chmod g+w {} +
+    find "${PROJECT_FOLDER}/var" -type d -exec chmod g+ws {} +
+fi
+if [ -d "${PROJECT_FOLDER}/pub/static" ]; then
+    find "${PROJECT_FOLDER}/pub/static" -type f -exec chmod g+w {} +
+    find "${PROJECT_FOLDER}/pub/static" -type d -exec chmod g+ws {} +
+fi
+if [ -d "${PROJECT_FOLDER}/pub/media" ]; then
+    find "${PROJECT_FOLDER}/pub/media" -type f -exec chmod g+w {} +
+    find "${PROJECT_FOLDER}/pub/media" -type d -exec chmod g+ws {} +
+fi
+if [ -d "${PROJECT_FOLDER}/app/etc" ]; then
+    find "${PROJECT_FOLDER}/app/etc" -type f -exec chmod g+w {} +
+    find "${PROJECT_FOLDER}/app/etc" -type d -exec chmod g+ws {} +
+fi
+if [ -d "${PROJECT_FOLDER}/generated" ]; then
+    find "${PROJECT_FOLDER}/generated" -type f -exec chmod g+w {} +
+    find "${PROJECT_FOLDER}/generated" -type d -exec chmod g+ws {} +
+fi
+if [ -d "${PROJECT_FOLDER}/storage" ]; then
+    find "${PROJECT_FOLDER}/storage" -type f -exec chmod g+w {} +
+    find "${PROJECT_FOLDER}/storage" -type d -exec chmod g+ws {} +
+fi
+if [ -d "${PROJECT_FOLDER}/bootstrap/cache" ]; then
+    find "${PROJECT_FOLDER}/bootstrap/cache" -type f -exec chmod g+w {} +
+    find "${PROJECT_FOLDER}/bootstrap/cache" -type d -exec chmod g+ws {} +
+fi
+if [ -e "${PROJECT_FOLDER}/bin/magento" ]; then
+    chmod u+x "${PROJECT_FOLDER}/bin/magento"
+fi
+
+find "${PROJECT_FOLDER}" -type f -exec chmod 664 {} \;
+find "${PROJECT_FOLDER}" -type d -exec chmod 775 {} \;
+
+kill ${pid}
+printf "\nDone!"

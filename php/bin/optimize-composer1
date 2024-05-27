@@ -1,0 +1,3 @@
+#!/bin/bash
+echo "Install hirak/prestissimo"
+composer global require hirak/prestissimo &>/dev/null
