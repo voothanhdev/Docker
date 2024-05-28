@@ -1,6 +1,7 @@
 # Docker Images
 
 ## Nginx
+- Working on user `www`
 ### Fix project file permission
 <pre>permission [&lt;project path&gt;]</pre>
 - Default: `/project` folder
@@ -59,6 +60,18 @@ create-forward-vhost --proxy-host=&lt;value&gt; --proxy-port=&lt;value&gt; [&lt;
 
 
 ## PHP
+- Working on user `www`
+### FPM Default Config
+<pre>
+listen = 9000
+listen.owner = www
+listen.group = www
+pm.max_children = 40
+pm.start_servers = 15
+pm.min_spare_servers = 15
+pm.max_spare_servers = 25
+pm.max_requests = 500
+</pre>
 ### Enable module(s)
 <pre>php-enable &lt;module name&gt; [&lt;module name&gt;...]</pre>
 ### Disable module(s)
@@ -71,7 +84,8 @@ create-forward-vhost --proxy-host=&lt;value&gt; --proxy-port=&lt;value&gt; [&lt;
 <pre>permission [&lt;project path&gt;]</pre>
 - Default: `/project` folder
 ### Download n98 command for Magento2
-<pre>download-n98</pre>
+<pre>download-n98 [&lt;version&gt;]</pre>
+- N98 command: `m2`
 ### Optimize composer 1
 - Install composer package `hirak/prestissimo`
 <pre>optimize-composer1</pre>
