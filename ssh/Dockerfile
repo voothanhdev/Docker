@@ -1,18 +1,20 @@
-FROM alpine
+FROM alpine:3.15
 
-MAINTAINER VooThanh DEV <voothanhdev@gmail.com>
+LABEL maintainer="<voothanhdev@gmail.com>"
+LABEL author.email="<voothanhdev@gmail.com>"
+LABEL author.name="VooThanh DEV"
 
 COPY ./entrypoint /
 
 RUN apk update \
-    && apk add openssh sshpass \
+    && apk --no-cache add openssh sshpass \
     && adduser -G www-data -D -u 1000 -s /bin/sh www \
     && mkdir -p /home/www/.ssh/pems \
     && mkdir -p /home/www/bin \
     && chown -R www:www-data /home/www/.ssh /home/www/.ssh/pems /home/www/bin \
     && chmod +x /entrypoint \
     && echo "export PATH=\"/home/www/bin:\$PATH\"" >> /home/www/.profile \
-    && rm -rf /tmp/* /var/cache/* /var/lib/apk/* /var/log/* /var/tmp/*
+    && rm -rf /tmp/* /var/cache/* /var/lib/apk/* /var/log/* /var/tmp/* /etc/apk/cache/*
 
 USER www
 

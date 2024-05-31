@@ -1,6 +1,8 @@
-FROM alpine
+FROM alpine:3.15
 
-MAINTAINER VooThanh DEV <voothanhdev@gmail.com>
+LABEL maintainer="<voothanhdev@gmail.com>"
+LABEL author.email="<voothanhdev@gmail.com>"
+LABEL author.name="VooThanh DEV"
 
 COPY entrypoint /
 COPY include/default.vcl /etc/varnish/default.vcl

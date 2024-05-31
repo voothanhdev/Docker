@@ -2,7 +2,9 @@ ARG VERSION=8.0
 
 FROM php:${VERSION}-fpm-alpine
 
-MAINTAINER VooThanh DEV <voothanhdev@gmail.com>
+LABEL maintainer="<voothanhdev@gmail.com>"
+LABEL author.email="<voothanhdev@gmail.com>"
+LABEL author.name="VooThanh DEV"
 
 # Update local file
 COPY ini/* /usr/local/etc/php/conf.d/
@@ -13,7 +15,7 @@ COPY entrypoint /
 
 # Update and add install
 RUN apk update && \
-    apk add openldap-dev \
+    apk --no-cache add openldap-dev \
             jpeg-dev \
             krb5-dev \
             freetype-dev \

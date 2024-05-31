@@ -1,14 +1,13 @@
 FROM nginx:alpine
 
-MAINTAINER VooThanh DEV <voothanhdev@gmail.com>
+LABEL maintainer="<voothanhdev@gmail.com>"
+LABEL author.email="<voothanhdev@gmail.com>"
+LABEL author.name="VooThanh DEV"
 
 ENV SERVER_NAME local.io
 ENV ROOT_FOLDER /project
-ENV VARNISH ""
 ENV VARNISH_PORT 6081
-ENV PROJECT_TYPE 2
 ENV HTTPS true
-ENV PROXY ""
 ENV PROXY_PORT 3000
 ENV PHP_PORT 9000
 
@@ -18,8 +17,7 @@ COPY bin/* /usr/local/bin/
 COPY entrypoint /
 
 RUN apk update && \
-    apk add bash && \
-    apk add openssl
+    apk --no-cache add bash openssl
 RUN adduser -G www-data -D -u 1000 -s /bin/bash www \
     && touch /var/run/nginx.pid \
     && mkdir -p ${ROOT_FOLDER} /sock \

@@ -3,12 +3,14 @@ ARG ALPINE=3.14
 
 FROM node:${VERSION}-alpine${ALPINE}
 
-MAINTAINER VooThanh DEV <voothanhdev@gmail.com>
+LABEL maintainer="<voothanhdev@gmail.com>"
+LABEL author.email="<voothanhdev@gmail.com>"
+LABEL author.name="VooThanh DEV"
 
 ENV ROOT_FOLDER /project
 
 RUN apk update && \
-    apk add autoconf \
+    apk --no-cache add autoconf \
             automake \
             make \
             nasm \

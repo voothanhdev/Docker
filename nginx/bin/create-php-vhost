@@ -319,15 +319,16 @@ function autoHttps() {
 generatePhpServer() {
     port=80
     ssl=""
+    backend="${SERVER_NAME//./-}-backend"
 
-    printf "${PHP_BE_TEMPLATE}" "${SERVER_NAME}-backend" "${PHP_SERVER}" "${PHP_PORT}" > "${CONFIG_PATH}${SERVER_NAME}.conf"
+    printf "${PHP_BE_TEMPLATE}" "${backend}" "${PHP_SERVER}" "${PHP_PORT}" > "${CONFIG_PATH}${SERVER_NAME}.conf"
 
     if [ "$HTTPS" = "$BOOL_TRUE" ]; then
         port="${SSL_PORT}"
         ssl="$(printf "${SSL_TEMPLATE}" "${SERVER_NAME}" "${SERVER_NAME}")"
     fi
 
-    phpLocaltion="$(printf "${PHP_LOCATION_TEMPLATE}" "${SERVER_NAME}-backend")"
+    phpLocaltion="$(printf "${PHP_LOCATION_TEMPLATE}" "${backend}")"
 
     printf "${PHP_SERVER_TEMPLATE}" "${port}" "${SERVER_NAME}" "${FOLDER}" "" "${ssl}" "${phpLocaltion}" >> "${CONFIG_PATH}${SERVER_NAME}.conf"
 }
@@ -338,13 +339,14 @@ generatePhpServer() {
 #
 function generatePhpVarnishServer() {
     varnish="${VARNISH}:${VARNISH_PORT}"
+    backend="${SERVER_NAME//./-}-backend"
 
     if [[ "$varnish" != "http"* ]]; then
         varnish="http://${varnish}"
     fi
 
-    printf "${PHP_BE_TEMPLATE}" "${SERVER_NAME}-backend" "${PHP_SERVER}" "${PHP_PORT}" > "${CONFIG_PATH}${SERVER_NAME}.conf"
-    printf "\n\n${PHP_SERVER_TEMPLATE}" "${VARNISH_BE_PORT}" "${SERVER_NAME}" "${FOLDER}" "${REAL_IP_TEMPLATE}" "" "${SERVER_NAME}-backend" >> "${CONFIG_PATH}${SERVER_NAME}.conf"
+    printf "${PHP_BE_TEMPLATE}" "${backend}" "${PHP_SERVER}" "${PHP_PORT}" > "${CONFIG_PATH}${SERVER_NAME}.conf"
+    printf "\n\n${PHP_SERVER_TEMPLATE}" "${VARNISH_BE_PORT}" "${SERVER_NAME}" "${FOLDER}" "${REAL_IP_TEMPLATE}" "" "${backend}" >> "${CONFIG_PATH}${SERVER_NAME}.conf"
 
     if [ "$HTTPS" = "$BOOL_TRUE" ]; then
         ssl="$(printf "${SSL_TEMPLATE}" "${SERVER_NAME}" "${SERVER_NAME}")"

@@ -297,13 +297,15 @@ function autoHttps() {
 function generateMagentoConfig() {
     mkdir -p "${MAGENTO_CONFIG_PATH}"
 
+    backend="${SERVER_NAME//./-}-backend"
+
     if [ -f "${FOLDER}/nginx.conf.sample" ]; then
         cp "${FOLDER}/nginx.conf.sample" "${MAGENTO_CONFIG_PATH}${SERVER_NAME}.conf"
     else
         cp "${MAGENTO_CONFIG_DEFAULT}" "${MAGENTO_CONFIG_PATH}${SERVER_NAME}.conf"
     fi
 
-    sed -i "s/fastcgi_pass.*;/fastcgi_pass ${SERVER_NAME}-backend;/g" "${MAGENTO_CONFIG_PATH}${SERVER_NAME}.conf"
+    sed -i "s/fastcgi_pass.*;/fastcgi_pass ${backend};/g" "${MAGENTO_CONFIG_PATH}${SERVER_NAME}.conf"
 }
 
 
@@ -315,8 +317,9 @@ function generateMagentoConfig() {
 function generateMagentoServer() {
     port=80
     ssl=""
+    backend="${SERVER_NAME//./-}-backend"
 
-    printf "${PHP_BE_TEMPLATE}" "${SERVER_NAME}-backend" "${PHP_SERVER}" "${PHP_PORT}" > "${CONFIG_PATH}${SERVER_NAME}.conf"
+    printf "${PHP_BE_TEMPLATE}" "${backend}" "${PHP_SERVER}" "${PHP_PORT}" > "${CONFIG_PATH}${SERVER_NAME}.conf"
 
     if [ "$HTTPS" = "true" ]; then
         port="${SSL_PORT}"
@@ -335,6 +338,7 @@ function generateMagentoServer() {
 #
 function generateMagentoVarnishServer() {
     varnish="${VARNISH}:${VARNISH_PORT}"
+    backend="${SERVER_NAME//./-}-backend"
 
     if [[ "$varnish" != "http"* ]]; then
         varnish="http://${varnish}"
@@ -342,7 +346,7 @@ function generateMagentoVarnishServer() {
 
     magentoIncludeTemp="$(printf "${MAGENTO_INCLUDE}" "${SERVER_NAME}")"
 
-    printf "${PHP_BE_TEMPLATE}" "${SERVER_NAME}-backend" "${PHP_SERVER}" "${PHP_PORT}" > "${CONFIG_PATH}${SERVER_NAME}.conf"
+    printf "${PHP_BE_TEMPLATE}" "${backend}" "${PHP_SERVER}" "${PHP_PORT}" > "${CONFIG_PATH}${SERVER_NAME}.conf"
     printf "${MAGENTO_SERVER_TEMPLATE}" "${VARNISH_BE_PORT}" "${SERVER_NAME}" "${FOLDER}" "${REAL_IP_TEMPLATE}" "" "${magentoIncludeTemp}" >> "${CONFIG_PATH}${SERVER_NAME}.conf"
 
     if [ "$HTTPS" = "$BOOL_TRUE" ]; then

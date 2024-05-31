@@ -2,7 +2,9 @@ ARG VERSION=7.0
 
 FROM php:${VERSION}-fpm-alpine
 
-MAINTAINER VooThanh DEV <@gmail.com>
+LABEL maintainer="<voothanhdev@gmail.com>"
+LABEL author.email="<voothanhdev@gmail.com>"
+LABEL author.name="VooThanh DEV"
 
 # Update local file
 COPY ini/* /usr/local/etc/php/conf.d/
@@ -13,7 +15,7 @@ COPY entrypoint /
 
 # Update and add install
 RUN apk update && \
-    apk add openldap-dev \
+    apk --no-cache add openldap-dev \
             jpeg-dev \
             krb5-dev \
             freetype-dev \
@@ -41,11 +43,11 @@ RUN addgroup -g 1000 www; adduser -G www -D -u 1000 -s /bin/sh www;
 # Configure the ext library
 RUN docker-php-ext-configure gd --with-freetype-dir=/usr/include/ \
                 --with-jpeg-dir=/usr/include/ \
-                --with-png-dir=/usr/include/;
-RUN docker-php-ext-configure zip --with-libzip;
-RUN docker-php-ext-configure imap --with-kerberos --with-imap-ssl;
-RUN docker-php-ext-configure ldap --with-libdir=lib;
-RUN docker-php-ext-configure opcache --enable-opcache;
+                --with-png-dir=/usr/include/; \
+    && docker-php-ext-configure zip --with-libzip; \
+    && docker-php-ext-configure imap --with-kerberos --with-imap-ssl; \
+    && docker-php-ext-configure ldap --with-libdir=lib; \
+    && docker-php-ext-configure opcache --enable-opcache;
 
 # Install extensions
 RUN docker-php-ext-install -j$(nproc) \
@@ -73,9 +75,9 @@ RUN docker-php-ext-install -j$(nproc) \
                                 tidy \
                                 xsl \
                                 pcntl \
-                                zip;
-RUN docker-php-ext-install xmlrpc;
-RUN docker-php-ext-install recode;
+                                zip \
+                                xmlrpc \
+                                recode;
 RUN pecl install -o -f xdebug-2.7.0 redis;
 RUN docker-php-ext-enable redis xdebug; rm /usr/local/etc/php/conf.d/z-xdebug3.ini;
 

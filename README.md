@@ -1,7 +1,7 @@
 # Docker Images
 
 ## Nginx
-- Working on user `www`
+- Working on user `www` and `/project` directory
 ### Fix project file permission
 <pre>permission [&lt;project path&gt;]</pre>
 - Default: `/project` folder
@@ -60,7 +60,7 @@ create-forward-vhost --proxy-host=&lt;value&gt; --proxy-port=&lt;value&gt; [&lt;
 
 
 ## PHP
-- Working on user `www`
+- Working on user `www` and `/project` directory
 ### FPM Default Config
 <pre>
 listen = 9000
@@ -89,3 +89,14 @@ pm.max_requests = 500
 ### Optimize composer 1
 - Install composer package `hirak/prestissimo`
 <pre>optimize-composer1</pre>
+
+## NodeJS
+- Working on user `www` and `/project` directory
+
+## Varnish
+- Working on port `6081`
+- Configuration file `/etc/varnish/default.vcl`
+
+## MailHog
+- Working port `1025`
+- GUI `localhost:8025`
