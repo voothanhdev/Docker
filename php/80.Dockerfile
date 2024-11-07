@@ -16,6 +16,7 @@ COPY entrypoint /
 # Update and add install
 RUN apk update && \
     apk --no-cache add openldap-dev \
+            rabbitmq-c-dev \
             jpeg-dev \
             krb5-dev \
             freetype-dev \
@@ -71,14 +72,14 @@ RUN docker-php-ext-install -j$(nproc) \
                                 xsl \
                                 pcntl \
                                 zip;
-RUN pecl install -o -f xmlrpc xdebug-3.2.0 redis;
-RUN rm /usr/local/etc/php/conf.d/z-xdebug.ini; docker-php-ext-enable xmlrpc redis xdebug;
+RUN pecl install -o -f xmlrpc xdebug-3.2.0 redis amqp;
+RUN rm /usr/local/etc/php/conf.d/z-xdebug.ini; docker-php-ext-enable xmlrpc redis xdebug amqp;
 
 # Install n98
 RUN curl -o m2 https://files.magerun.net/n98-magerun2.phar; chmod +x m2 && mv m2 /usr/bin/m2;
 # Install composer
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
-    && su - www -c "composer global require squizlabs/php_codesniffer"
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
 # Install mailhog
 RUN curl -sSLO https://github.com/mailhog/mhsendmail/releases/download/v0.2.0/mhsendmail_linux_amd64 \
     && chmod +x mhsendmail_linux_amd64 \

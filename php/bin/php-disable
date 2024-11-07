@@ -1,7 +1,18 @@
 #!/bin/bash
-for ext in "$@"; do
+if [ -z "$1" ]; then
+    printf "Usage: Disable Modules\n\t php-disable <module name> [<module name>...]\n" && exit
+fi
+
+mapfile -t modules < <(echo "$1" | tr ' ' "\n")
+
+for ext in "${modules[@]}"
+do
+    ext=$(echo "${ext}" | tr '[:upper:]' '[:lower:]')
+    
     if [[ -f "/usr/local/etc/php/conf.d/docker-php-ext-$ext.ini" ]]; then
         sed -i -e 's/^zend_extension/\;zend_extension/g' "/usr/local/etc/php/conf.d/docker-php-ext-$ext.ini"
         printf "%s Disabled.\n" "$ext"
+    else
+        printf "Module \`%s\` doesn't exists.\n" "$ext"
     fi
 done

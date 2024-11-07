@@ -1,17 +1,35 @@
 #!/bin/sh
 set -e
 
-chmod -R 700 /home/www/.ssh
-chmod 600 /home/www/.ssh/*
-chmod -R 700 /home/www/.ssh/pems
-chmod 600 /home/www/.ssh/pems/*
-chmod 644 /home/www/.ssh/*.pub
+chmod -R 0700 /home/www/.ssh
 
 eval `ssh-agent -s`
 
-for file in /home/www/.ssh/pems/*.pem; do
+folders=$(find /home/www/.ssh -type d)
+for folder in $folders; do
+    if [ -d "$folder" ]; then
+        chmod -R 0700 "$folder"
+    fi
+done
+
+files=$(find /home/www/.ssh -type f)
+for file in $files; do
+    if [ -f "$file" ]; then
+        chmod 0600 "$file"
+    fi
+done
+
+pems=$(find /home/www/.ssh -type f -name "*.pem")
+for file in $pems; do
     if [ -f "$file" ]; then
         ssh-add "$file"
+    fi
+done
+
+pubs=$(find /home/www/.ssh -type f -name "*.pub")
+for file in $pubs; do
+    if [ -f "$file" ]; then
+        chmod 0644 "$file"
     fi
 done
 

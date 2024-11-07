@@ -1,5 +1,11 @@
 #!/bin/bash
-for item in "$@"
+if [ -z "$1" ]; then
+    printf "Usage: Update PHP FPM Pool Configuration\n\t ppool <KEY>=<VALUE> [<KEY2>=<VALUE2> ...]\n" && exit
+fi
+
+mapfile -t configs < <(echo "$1" | tr ' ' "\n")
+
+for item in "${configs[@]}"
 do
 	mapfile -t item < <(echo "${item}" | tr '=' "\n")
 	configName=$(echo "${item[0]}" | tr '[:upper:]' '[:lower:]')
@@ -8,4 +14,6 @@ do
 	sed -i "/${configName}/d" /usr/local/etc/php-fpm.d/zz-docker.conf
 	printf "\n%s = %s" "${configName}" "${configValue}" >> /usr/local/etc/php-fpm.d/zz-docker.conf
 	sed -i '/^$/d' /usr/local/etc/php-fpm.d/zz-docker.conf
+
+	echo "Update FPM config successful! \`${configName}\` = \`${configValue}\`"
 done
