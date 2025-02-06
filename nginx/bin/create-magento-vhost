@@ -49,7 +49,7 @@ PHP_PORT="${PHP_PORT_DEFAULT}"
 ########################################################################################################################
 CONFIG_PATH=/etc/nginx/conf.d/
 MAGENTO_CONFIG_PATH=/etc/nginx/magento/
-MAGENTO_CONFIG_DEFAULT=/etc/nginx/magento.conf
+MAGENTO_CONFIG_DEFAULT=/etc/nginx/include/magento.conf
 
 
 ########################################################################################################################
