@@ -1,6 +1,12 @@
 #!/bin/bash
 set -e
 
+FMT_RED=$(printf '\033[31m')
+FMT_GREEN=$(printf '\033[32m')
+FMT_BLUE=$(printf '\033[34m')
+FMT_BOLD=$(printf '\033[1m')
+FMT_RESET=$(printf '\033[0m')
+
 ##
 # Show count up
 # param $1 waiting message
@@ -9,7 +15,7 @@ spin() {
     i=1
     while true; do
         sleep 1
-        printf "\r$1: %d" ${i}
+        printf "\r%s$1%s: %d" "${FMT_BOLD}${FMT_BLUE}" "${FMT_RESET}" ${i}
         i=$((i + 1))
         wait
     done
@@ -17,24 +23,14 @@ spin() {
 
 PROJECT_FOLDER="$1"
 OWN_USER=www
-OWN_GROUP=www-data
-
-function help()
-{
-    printf "Usage: Update permission of project file and folder.
-        permission <project path>
-
-    Options:
-        -h, --help%-38s\t\t\tDisplay this help message
-    " " "
-}
+OWN_GROUP=www
 
 if [ -z "${PROJECT_FOLDER}" ]; then
     PROJECT_FOLDER="${ROOT_PROJECT}"
 fi
 
 if [ ! -d "${PROJECT_FOLDER}" ]; then
-    printf "\%s does not a directory!" "${PROJECT_FOLDER}" && exit
+    printf "%s%s does not a directory!%s" "${FMT_RED}" "${PROJECT_FOLDER}" "${FMT_RESET}" && exit
 fi
 
 spin 'Running fix permission' &
@@ -44,6 +40,10 @@ chown -R "${OWN_USER}":"${OWN_GROUP}" "${PROJECT_FOLDER}"
 if [ -d "${PROJECT_FOLDER}/var" ]; then
     find "${PROJECT_FOLDER}/var" -type f -exec chmod g+w {} +
     find "${PROJECT_FOLDER}/var" -type d -exec chmod g+ws {} +
+fi
+if [ -d "${PROJECT_FOLDER}/vendor " ]; then
+    find "${PROJECT_FOLDER}/vendor " -type f -exec chmod g+w {} +
+    find "${PROJECT_FOLDER}/vendor " -type d -exec chmod g+ws {} +
 fi
 if [ -d "${PROJECT_FOLDER}/pub/static" ]; then
     find "${PROJECT_FOLDER}/pub/static" -type f -exec chmod g+w {} +
@@ -77,4 +77,4 @@ find "${PROJECT_FOLDER}" -type f -exec chmod 664 {} \;
 find "${PROJECT_FOLDER}" -type d -exec chmod 775 {} \;
 
 kill ${pid}
-printf "\nDone!"
+printf "\n%sDone!%s" "${FMT_BOLD}${FMT_BLUE}" "${FMT_RESET}"

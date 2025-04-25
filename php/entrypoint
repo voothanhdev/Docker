@@ -10,11 +10,11 @@ if [ -n "${MODULE_DISABLE}" ]; then
 fi
 
 if [ -n "${PHP_CONFIG}" ]; then
-	pconfig "${PHP_CONFIG}"
+	php-config "${PHP_CONFIG}"
 fi
 
 if [ -n "${FPM_POOL}" ]; then
-	ppool "${FPM_POOL}"
+	php-pool "${FPM_POOL}"
 fi
 
 if [ -n "${MAILHOG_ADDR}" ]; then

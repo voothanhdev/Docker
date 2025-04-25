@@ -7,25 +7,28 @@ LABEL maintainer="<voothanhdev@gmail.com>"
 LABEL author.email="<voothanhdev@gmail.com>"
 LABEL author.name="VooThanh DEV"
 
-ENV ROOT_FOLDER /project
+ENV APP_DIR=/app
 
 RUN apk update && \
-    apk --no-cache add autoconf \
-            automake \
-            make \
-            nasm \
-            file \
-            libtool \
-            libjpeg \
-            zlib-dev \
-            libpng-dev \
+    apk --no-cache add \
+        python3 \
+        make \
+        g++ \
+        autoconf \
+        automake \
+        libtool \
+        nasm \
+        file \
+        libjpeg \
+        zlib \
+        libpng \
     && rm -rf /tmp/* /var/cache/* /var/lib/apk/* /var/log/* /var/tmp/*
-RUN mkdir -p ${ROOT_FOLDER} \
+RUN mkdir -p ${APP_DIR} \
     && mkdir -p /usr/local/lib/node_modules \
-    && chown -R 1000:1000 "${ROOT_FOLDER}" /usr/local/lib/node_modules /usr/local/bin \
-    && chmod -R 0777 "${ROOT_FOLDER}"
+    && chown -R 1000:1000 "${APP_DIR}" /usr/local/lib/node_modules /usr/local/bin \
+    && chmod -R 0777 "${APP_DIR}"
 
-WORKDIR ${ROOT_FOLDER}
+WORKDIR ${APP_DIR}
 
 USER 1000
 

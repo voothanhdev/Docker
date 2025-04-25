@@ -1,5 +1,17 @@
 #!/bin/bash
-[ -z "$1" ] && printf "Usage:\n\t nginx-config <KEY>=<VALUE> [<KEY2>=<VALUE2> ...]\n" && exit
+
+FMT_RED=$(printf '\033[31m')
+FMT_GREEN=$(printf '\033[32m')
+FMT_BLUE=$(printf '\033[34m')
+FMT_BOLD=$(printf '\033[1m')
+FMT_RESET=$(printf '\033[0m')
+
+[ -z "$1" ] && printf "%sUsage%s:\n\t %snginx-config <KEY>=<VALUE> [<KEY2>=<VALUE2> ...]%s\n" \
+        "${FMT_BOLD}" \
+        "${FMT_RESET}" \
+        "${FMT_BLUE}" \
+        "${FMT_RESET}" \
+    && exit
 
 for item in "$@"
 do

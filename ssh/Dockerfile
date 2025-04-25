@@ -1,4 +1,4 @@
-FROM alpine:3.15
+FROM alpine
 
 LABEL maintainer="<voothanhdev@gmail.com>"
 LABEL author.email="<voothanhdev@gmail.com>"
