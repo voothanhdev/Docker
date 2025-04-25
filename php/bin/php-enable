@@ -1,6 +1,18 @@
 #!/bin/bash
+
+FMT_RED=$(printf '\033[31m')
+FMT_GREEN=$(printf '\033[32m')
+FMT_BLUE=$(printf '\033[34m')
+FMT_BOLD=$(printf '\033[1m')
+FMT_RESET=$(printf '\033[0m')
+
 if [ -z "$1" ]; then
-    printf "Usage: Enable Modules\n\t php-enable <module name> [<module name>...]\n" && exit
+    printf "%sUsage%s: Enable Modules\n\t %sphp-enable <module name> [<module name>...]%s\n" \
+    "${FMT_BOLD}" \
+    "${FMT_RESET}" \
+    "${FMT_BLUE}" \
+    "${FMT_RESET}" \
+    && exit
 fi
 
 mapfile -t modules < <(echo "$1" | tr ' ' "\n")
@@ -29,8 +41,8 @@ do
         fi
 
         sed -i -e 's/^;zend_extension/\zend_extension/g' "/usr/local/etc/php/conf.d/docker-php-ext-$ext.ini"
-        printf "%s Enabled.\n" "$ext"
+        printf "%s%s Enabled.%s\n" "${FMT_GREEN}" "$ext" "${FMT_RESET}"
     else
-        printf "Module \`%s\` doesn't exists.\n" "$ext"
+        printf "%sModule \`%s\` doesn't exists.%s\n" "${FMT_RED}" "$ext" "${FMT_RESET}"
     fi
 done

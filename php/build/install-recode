@@ -1,0 +1,12 @@
+#!/bin/sh
+set -e
+
+if [ -z "$PHP_VERSION" ]; then
+    echo "PHP_VERSION is empty." && exit
+fi
+
+VERSION_NUMBER=$(echo "${PHP_VERSION}" | awk -F. '{print $1 $2}');
+
+if [ "${VERSION_NUMBER}" -lt 72 ]; then
+    docker-php-ext-install recode;
+fi

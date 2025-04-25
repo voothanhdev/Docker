@@ -1,0 +1,32 @@
+#!/bin/sh
+set -e
+
+if [ -z "$PHP_VERSION" ]; then
+    echo "PHP_VERSION is empty." && exit
+fi
+
+version=xdebug
+
+case "$PHP_VERSION" in
+    7.[0-3]*)
+        version=xdebug-2.7.0 ;;
+    7.4*)
+        version=xdebug-3.1.0 ;;
+    8.[0-2]*)
+        version=xdebug-3.2.2 ;;
+    8.3*)
+        version=xdebug-3.3.2 ;;
+    8.4*)
+        version=xdebug-3.4.2 ;;
+    *)
+        ;;
+esac
+
+if echo "$version" | grep -q "^xdebug-2"; then
+    rm /usr/local/etc/php/conf.d/z-xdebug3.ini;
+else
+    rm /usr/local/etc/php/conf.d/z-xdebug.ini;
+fi
+
+pecl install -o -f $version;
+echo ";zend_extension=xdebug.so" > /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini # default disable xdebug

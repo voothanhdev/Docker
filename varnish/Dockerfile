@@ -1,4 +1,4 @@
-FROM alpine:3.15
+FROM alpine
 
 LABEL maintainer="<voothanhdev@gmail.com>"
 LABEL author.email="<voothanhdev@gmail.com>"
@@ -9,7 +9,6 @@ COPY include/default.vcl /etc/varnish/default.vcl
 COPY include/GeoLite2-Country.mmdb /etc/geoip/GeoLite2-Country.mmdb
 
 RUN apk add --update varnish libmaxminddb && \
-    sed -i -e 's/\r$//' /entrypoint && \
     chmod +x /entrypoint && \
     rm -rf /var/cache/apk/*
 

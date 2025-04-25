@@ -1,0 +1,22 @@
+#!/bin/sh
+set -e
+
+if [ -z "$PHP_VERSION" ]; then
+    echo "PHP_VERSION is empty." && exit
+fi
+
+VERSION_NUMBER=$(echo "${PHP_VERSION}" | awk -F. '{print $1 $2}');
+
+if [ "${VERSION_NUMBER}" -lt 74 ]; then
+    docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/;
+else
+    docker-php-ext-configure gd --with-freetype --with-jpeg;
+fi
+
+if [ "${VERSION_NUMBER}" -lt 84 ]; then
+    docker-php-ext-configure imap --with-kerberos --with-imap-ssl;
+fi
+
+if [ "${VERSION_NUMBER}" -lt 72 ]; then
+    sed -i 's/"buffio.h"/"tidybuffio.h"/' /usr/src/php/ext/tidy/*.c;
+fi

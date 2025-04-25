@@ -17,4 +17,8 @@ if [ -n "${FPM_POOL}" ]; then
 	ppool "${FPM_POOL}"
 fi
 
+if [ -n "${MAILHOG_ADDR}" ]; then
+	sed -i -E "s/--smtp-addr=[^ ]+/--smtp-addr=${MAILHOG_ADDR}/g" /usr/local/etc/php/conf.d/z-mail.ini
+fi
+
 exec "$@"

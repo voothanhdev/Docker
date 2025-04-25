@@ -1,0 +1,31 @@
+#!/bin/bash
+
+FMT_RED=$(printf '\033[31m')
+FMT_GREEN=$(printf '\033[32m')
+FMT_BLUE=$(printf '\033[34m')
+FMT_BOLD=$(printf '\033[1m')
+FMT_RESET=$(printf '\033[0m')
+
+if [ -z "$1" ]; then
+    printf "%sUsage%s: Update PHP Configuration\n\t %sphp-config <KEY>=<VALUE> [<KEY2>=<VALUE2> ...]%s\n" \
+        "${FMT_BOLD}" \
+        "${FMT_RESET}" \
+        "${FMT_BLUE}" \
+        "${FMT_RESET}" \
+    && exit
+fi
+
+mapfile -t configs < <(echo "$1" | tr ' ' "\n")
+
+for item in "${configs[@]}"
+do
+	mapfile -t item < <(echo "${item}" | tr '=' "\n")
+	configName=$(echo "${item[0]}" | tr '[:upper:]' '[:lower:]')
+	configValue=${item[1]}
+
+	sed -i "/${configName}/d" /usr/local/etc/php/conf.d/zz-docker.ini
+	printf "\n%s = %s" "${configName}" "${configValue}" >> /usr/local/etc/php/conf.d/zz-docker.ini
+	sed -i '/^$/d' /usr/local/etc/php/conf.d/zz-docker.ini
+
+	printf "%sUpdate PHP config successful!%s \`${configName}\` = \`${configValue}\`" "${FMT_BOLD}${FMT_GREEN}" "${FMT_RESET}"
+done

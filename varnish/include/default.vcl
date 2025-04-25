@@ -2,6 +2,8 @@
 vcl 4.0;
 
 import std;
+import geoip2;
+
 # The minimal Varnish version is 6.0
 # For SSL offloading, pass the following header in your proxy server or load balancer: 'X-Forwarded-Proto: https'
 
@@ -9,13 +11,10 @@ backend default {
     .host = "nginx";
     .port = "8080";
     .first_byte_timeout = 600s;
-    .probe = {
-        .url = "/health_check.php";
-        .timeout = 2s;
-        .interval = 5s;
-        .window = 10;
-        .threshold = 5;
-    }
+}
+
+sub vcl_init {
+    new geoip = geoip2.geoip2("/etc/geoip/GeoLite2-Country.mmdb");
 }
 
 acl purge {
@@ -31,6 +30,9 @@ sub vcl_recv {
         set req.url = regsub(req.url, "\?$", "");
     }
 
+    # Set Country Code
+    set req.http.X-Country-Code = geoip.country_code(client.ip);
+
     # Remove port number from host header
     set req.http.Host = regsub(req.http.Host, ":[0-9]+", "");
 
@@ -40,6 +42,11 @@ sub vcl_recv {
     # Remove the proxy header to mitigate the httpoxy vulnerability
     # See https://httpoxy.org/
     unset req.http.proxy;
+
+    # Verify country
+    #if (req.http.X-Country-Code == "CN") {
+    #    return (synth(403, "Forbidden from your region"));
+    #}
 
     # Add X-Forwarded-Proto header when using https
     if (!req.http.X-Forwarded-Proto && (std.port(server.ip) == 443)) {

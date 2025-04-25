@@ -1,54 +1,149 @@
-FROM alpine:3.20
+ARG VERSION=8.0
 
-# Cài đặt gói `build-essential` để xây dựng các gói khác
-RUN apk add --no-cache build-essential
+FROM golang:alpine AS mailhog
 
-# Tải xuống và giải nén các gói nguồn PHP 7.0
-RUN wget https://dl.php.net/releases/7.0.33/php-7.0.33.tar.gz && tar -xzvf php-7.0.33.tar.gz
+RUN go install github.com/mailhog/mhsendmail@latest && \
+    chmod +x /go/bin/mhsendmail
 
-# Chuyển đến thư mục nguồn PHP
-WORKDIR php-7.0.33
+FROM php:${VERSION}-fpm-alpine AS builder
 
-# Cấu hình và cài đặt PHP 7.0
-RUN ./configure \
-    --prefix=/usr/local \
-    --with-config-file=/etc/php/php.ini \
-    --with-fpm-user=app \
-    --with-fpm-group=app \
-    --with-mysqli \
-    --with-pdo_mysql \
-    --with-gd \
-    --with-jpeg \
-    --with-png \
-    --with-xml \
-    --with-mbstring \
-    --with-bz2 \
-    --with-zlib \
-    --with-curl \
-    --with-openssl \
-    --with-gmp \
-    --enable-fpm
+ARG VERSION
 
-RUN make && make install
+COPY ini/* /usr/local/etc/php/conf.d/
+COPY build/* /usr/local/bin/
 
-# Tạo thư mục cho ứng dụng web
-RUN mkdir /app
+# Update and add install
+RUN apk add --no-cache --virtual .build-deps \
+        $PHPIZE_DEPS \
+        autoconf \
+        linux-headers \
+        gcc \
+        g++ \
+        make \
+        libtool \
+        bison \
+        re2c \
+        coreutils \
+        curl-dev \
+        openldap-dev \
+        gmp-dev \
+        imap-dev \
+        icu-dev \
+        zlib-dev \
+        libxml2-dev \
+        bzip2-dev \
+        gettext-dev \
+        libpng-dev \
+        freetype-dev \
+        libjpeg-turbo-dev \
+        tidyhtml-dev \
+        libxslt-dev \
+        pcre-dev \
+        aspell-dev \
+        libmcrypt-dev \
+        recode-dev \
+        krb5-dev \
+        sqlite-dev \
+        libzip-dev \
+        recode-dev \
+        rabbitmq-c-dev \
+    && chmod +x /usr/local/bin/*
 
-# Sao chép tập tin cấu hình PHP-FPM
-COPY /usr/local/etc/php.ini /etc/php/php-fpm.conf
+# Install extensions
+RUN /usr/local/bin/ext-configuration \
+    && docker-php-ext-install -j$(nproc) \
+                                bcmath \
+                                bz2 \
+                                calendar \
+                                exif \
+                                gd \
+                                gettext \
+                                gmp \
+                                intl \
+                                ldap \
+                                mysqli \
+                                opcache \
+                                pdo_mysql \
+                                shmop \
+                                soap \
+                                sockets \
+                                sysvmsg \
+                                sysvsem \
+                                sysvshm \
+                                tidy \
+                                xsl \
+                                pcntl \
+                                zip \
+    && /usr/local/bin/install-imap \
+    && /usr/local/bin/install-pspell \
+    && /usr/local/bin/install-recode \
+    && /usr/local/bin/install-xmlrpc \
+    && /usr/local/bin/install-redis \
+    && /usr/local/bin/install-amqp \
+    && /usr/local/bin/install-xdebug
 
-# Chỉnh sửa tập tin cấu hình PHP để phù hợp với Alpine 3.20
-RUN sed -i 's=/run/php/php-fpm.sock=/run/php/php-fpm.sock/g' /etc/php/php-fpm.conf
+FROM php:${VERSION}-fpm-alpine
 
-# Xóa thư mục build
-RUN rm -rf php-7.0.33
+LABEL maintainer="<voothanhdev@gmail.com>"
+LABEL author.email="<voothanhdev@gmail.com>"
+LABEL author.name="VooThanh DEV"
 
-# Sao chép mã ứng dụng vào thư mục web
-COPY . /app
+ENV APP_DIR=/app
+ENV MAILHOG_ADDR="mailhog:1025"
 
-# Chuyển đổi người dùng sang "app"
-RUN usermod -l app -d /app
-RUN chown -R app:app /app
+# Update local file
+COPY pool/* /usr/local/etc/php-fpm.d/
+COPY bin/* /usr/local/bin/
+# Copy mhsendmail from the builder stage
+COPY --from=mailhog /go/bin/mhsendmail /usr/local/bin/mhsendmail
+COPY --from=builder /usr/local/lib/php/extensions/ /usr/local/lib/php/extensions/
+COPY --from=builder /usr/local/etc/php/conf.d/ /usr/local/etc/php/conf.d/
+# Entrypoint
+COPY entrypoint /
 
-# Khởi động PHP-FPM
-CMD ["/usr/local/sbin/php-fpm", "-i", "-d", "error_reporting=24"]
+RUN apk add --no-cache \
+        bash \
+        unzip \
+        libintl \
+        tidyhtml \
+        libjpeg \
+        libpng \
+        freetype \
+        icu \
+        gmp \
+        aspell \
+        openldap \
+        libxslt \
+        libzip \
+        libmcrypt \
+        zlib \
+        bzip2 \
+        libxml2 \
+        gettext \
+        krb5 \
+        sqlite-libs \
+        curl \
+        openssl \
+        rabbitmq-c
+
+# Create user www
+RUN addgroup -g 1000 www; adduser -G www -D -u 1000 -s /bin/sh www;
+
+# Install composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+# Update permission file
+RUN sed -i -e 's/home\/www:\/bin\/sh/home\/www:\/bin\/bash/g' /etc/passwd \
+    && mkdir ${APP_DIR} /sock \
+    && chmod +x /entrypoint \
+    && chown -R www:www ${APP_DIR} /sock /usr/local/etc/php/conf.d /usr/local/etc/php-fpm.d /entrypoint
+
+ENTRYPOINT ["/entrypoint"]
+
+WORKDIR ${APP_DIR}
+
+USER www
+
+EXPOSE 9000
+
+CMD ["php-fpm", "-R"]

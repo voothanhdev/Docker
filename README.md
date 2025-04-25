@@ -60,38 +60,46 @@ create-forward-vhost --proxy-host=&lt;value&gt; --proxy-port=&lt;value&gt; [&lt;
 
 
 ## PHP
-- Working on user `www` and `/project` directory
+- Working on user `www` and `/app` directory
+### ENV
+- MAILHOG_ADDR: Mailhog address (default: `mailhog:1025`)
+- MODULE_ENABLE: List of PHP modules to enable (Eg: `intl mbstring opcache`)
+- MODULE_DISABLE: List of PHP modules to disable (Eg: `xdebug opcache`)
+- PHP_CONFIG: PHP config (Eg: `date.timezone=UTC memory_limit=512M`)
+- FPM_POOL: FPM config (Eg: `pm.max_children=10 pm.start_servers=4 pm.min_spare_servers=2 pm.max_spare_servers=6`)
+- MAGERUN_VERSION: N98 Magerun version (For Magento)
 ### FPM Default Config
 <pre>
 listen = 9000
 listen.owner = www
 listen.group = www
-pm.max_children = 40
-pm.start_servers = 15
-pm.min_spare_servers = 15
-pm.max_spare_servers = 25
-pm.max_requests = 500
+pm = dynamic
+pm.max_children = 10
+pm.start_servers = 4
+pm.min_spare_servers = 2
+pm.max_spare_servers = 6
 </pre>
 ### Enable module(s)
 <pre>php-enable &lt;module name&gt; [&lt;module name&gt;...]</pre>
 ### Disable module(s)
 <pre>php-disable &lt;module name&gt; [&lt;module name&gt;...]</pre>
+### Update PHP config
+<pre>php-config &lt;key&gt;=&lt;value&gt; [&lt;key&gt;=&lt;value&gt;...]</pre>
 ### Update FPM config
-<pre>ppool &lt;key&gt;=&lt;value&gt; [&lt;key&gt;=&lt;value&gt;...]</pre>
+<pre>php-pool &lt;key&gt;=&lt;value&gt; [&lt;key&gt;=&lt;value&gt;...]</pre>
 ### Start Crontab Service
 <pre>cron-start</pre>
 ### Fix project file permission
 <pre>permission [&lt;project path&gt;]</pre>
-- Default: `/project` folder
-### Download n98 command for Magento2
-<pre>download-n98 [&lt;version&gt;]</pre>
-- N98 command: `m2`
+- Default: `/app` folder
+### n98 command for Magento2
+<pre>magenrun [option]</pre>
 ### Optimize composer 1
 - Install composer package `hirak/prestissimo`
 <pre>optimize-composer1</pre>
 
 ## NodeJS
-- Working on user `www` and `/project` directory
+- Working on user `www` and `/app` directory
 
 ## Varnish
 - Working on port `6081`

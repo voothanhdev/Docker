@@ -1,0 +1,18 @@
+#!/bin/sh
+set -e
+
+if [ -z "$PHP_VERSION" ]; then
+    echo "PHP_VERSION is empty." && exit
+fi
+
+version=
+
+case "$PHP_VERSION" in
+    7.[0-4]*)
+        version=-1.10.2 ;;
+    *)
+        ;;
+esac
+
+pecl install -o -f amqp$version;
+echo "extension=amqp.so" > /usr/local/etc/php/conf.d/docker-php-ext-amqp.ini
