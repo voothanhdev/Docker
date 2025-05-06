@@ -18,7 +18,11 @@ if [ -n "${FPM_POOL}" ]; then
 fi
 
 if [ -n "${MAILHOG_ADDR}" ]; then
-	sed -i -E "s/--smtp-addr=[^ ]+/--smtp-addr=${MAILHOG_ADDR}/g" /usr/local/etc/php/conf.d/z-mail.ini
+	sed -i -E "s/--smtp-addr=[^ ]+/--smtp-addr=${MAILHOG_ADDR}\"/g" /usr/local/etc/php/conf.d/z-mail.ini
+fi
+
+if [ -n "${MAGERUN_VERSION}" ]; then
+	download-magerun "${MAGERUN_VERSION}" &2> /dev/null
 fi
 
 exec "$@"

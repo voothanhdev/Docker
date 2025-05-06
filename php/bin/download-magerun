@@ -1,0 +1,14 @@
+#!/bin/bash
+version="$MAGERUN_VERSION"
+
+if [ "${version}" != "latest" ]; then
+    version=""
+fi
+
+if [ -n "${version}" ]; then
+    version="-${version}"
+fi
+
+curl -o magerun "https://files.magerun.net/n98-magerun2${version}.phar";
+chmod +x magerun
+mv magerun /usr/local/bin/

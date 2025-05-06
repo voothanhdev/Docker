@@ -127,7 +127,7 @@ function help()
         %-40soptional\t\t\tUse https (%s / %s). Default: %s
         %-40soptional\t\t\tServer name. Default: %s
         -h, --help%-38s\t\t\tDisplay this help message
-    " "${OPTION_FOLDER}" "${ROOT_FOLDER}" \
+    " "${OPTION_FOLDER}" "${APP_DIR}" \
     "${OPTION_PROXY}" \
     "${OPTION_PROXY_PORT}" \
     "${OPTION_HTTPS}" "${BOOL_TRUE}" "${BOOL_FALSE}" "${HTTPS}" \
@@ -158,7 +158,7 @@ function mapVariables() {
     done
 
     if [ -z "$FOLDER" ]; then
-        FOLDER="${ROOT_FOLDER}"
+        FOLDER="${APP_DIR}"
     fi
 
     if [ -z "$SERVER_NAME" ]; then

@@ -103,6 +103,9 @@ COPY entrypoint /
 
 RUN apk add --no-cache \
         bash \
+        iproute2 \
+        patch \
+        su-exec \
         unzip \
         libintl \
         tidyhtml \
@@ -124,25 +127,23 @@ RUN apk add --no-cache \
         sqlite-libs \
         curl \
         openssl \
-        rabbitmq-c
-
-# Create user www
-RUN addgroup -g 1000 www; adduser -G www -D -u 1000 -s /bin/sh www;
+        rabbitmq-c \
+        c-client
 
 # Install composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
+# Create user www
 # Update permission file
-RUN sed -i -e 's/home\/www:\/bin\/sh/home\/www:\/bin\/bash/g' /etc/passwd \
-    && mkdir ${APP_DIR} /sock \
+RUN addgroup -g 1000 www \
+    && adduser -G www -D -u 1000 -s /bin/sh www \
+    && mkdir ${APP_DIR} \
     && chmod +x /entrypoint \
-    && chown -R www:www ${APP_DIR} /sock /usr/local/etc/php/conf.d /usr/local/etc/php-fpm.d /entrypoint
+    && chown -R www:www ${APP_DIR}
 
 ENTRYPOINT ["/entrypoint"]
 
 WORKDIR ${APP_DIR}
-
-USER www
 
 EXPOSE 9000
 

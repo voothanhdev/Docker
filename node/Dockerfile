@@ -23,13 +23,8 @@ RUN apk update && \
         zlib \
         libpng \
     && rm -rf /tmp/* /var/cache/* /var/lib/apk/* /var/log/* /var/tmp/*
-RUN mkdir -p ${APP_DIR} \
-    && mkdir -p /usr/local/lib/node_modules \
-    && chown -R 1000:1000 "${APP_DIR}" /usr/local/lib/node_modules /usr/local/bin \
-    && chmod -R 0777 "${APP_DIR}"
+RUN mkdir -p ${APP_DIR} && chown -R node:node "${APP_DIR}"
 
 WORKDIR ${APP_DIR}
-
-USER 1000
 
 CMD ["node"]

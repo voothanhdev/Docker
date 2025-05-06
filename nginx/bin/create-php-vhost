@@ -206,7 +206,7 @@ function help() {
         %-40soptional\t\t\tPHP port. Default: %s
         %-40soptional\t\t\tServer name. Default: %s
         -h, --help%-38s\t\t\tDisplay this help message
-    " "${OPTION_FOLDER}" "${ROOT_FOLDER}" \
+    " "${OPTION_FOLDER}" "${APP_DIR}" \
     "${OPTION_HTTPS}" "${BOOL_TRUE}" "${BOOL_FALSE}" "${HTTPS}" \
     "${OPTION_VARNISH}" \
     "${OPTION_VARNISH_PORT}"  "${VARNISH_PORT_DEFAULT}" \
@@ -239,7 +239,7 @@ function mapVariables() {
     done
 
     if [ -z "$FOLDER" ]; then
-        FOLDER="${ROOT_FOLDER}"
+        FOLDER="${APP_DIR}"
     fi
 
     if [ -z "$SERVER_NAME" ]; then

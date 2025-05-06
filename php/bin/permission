@@ -26,7 +26,7 @@ OWN_USER=www
 OWN_GROUP=www
 
 if [ -z "${PROJECT_FOLDER}" ]; then
-    PROJECT_FOLDER="${ROOT_PROJECT}"
+    PROJECT_FOLDER="${APP_DIR}"
 fi
 
 if [ ! -d "${PROJECT_FOLDER}" ]; then
@@ -37,44 +37,17 @@ spin 'Running fix permission' &
 pid=$!
 
 chown -R "${OWN_USER}":"${OWN_GROUP}" "${PROJECT_FOLDER}"
-if [ -d "${PROJECT_FOLDER}/var" ]; then
-    find "${PROJECT_FOLDER}/var" -type f -exec chmod g+w {} +
-    find "${PROJECT_FOLDER}/var" -type d -exec chmod g+ws {} +
-fi
-if [ -d "${PROJECT_FOLDER}/vendor " ]; then
-    find "${PROJECT_FOLDER}/vendor " -type f -exec chmod g+w {} +
-    find "${PROJECT_FOLDER}/vendor " -type d -exec chmod g+ws {} +
-fi
-if [ -d "${PROJECT_FOLDER}/pub/static" ]; then
-    find "${PROJECT_FOLDER}/pub/static" -type f -exec chmod g+w {} +
-    find "${PROJECT_FOLDER}/pub/static" -type d -exec chmod g+ws {} +
-fi
-if [ -d "${PROJECT_FOLDER}/pub/media" ]; then
-    find "${PROJECT_FOLDER}/pub/media" -type f -exec chmod g+w {} +
-    find "${PROJECT_FOLDER}/pub/media" -type d -exec chmod g+ws {} +
-fi
-if [ -d "${PROJECT_FOLDER}/app/etc" ]; then
-    find "${PROJECT_FOLDER}/app/etc" -type f -exec chmod g+w {} +
-    find "${PROJECT_FOLDER}/app/etc" -type d -exec chmod g+ws {} +
-fi
-if [ -d "${PROJECT_FOLDER}/generated" ]; then
-    find "${PROJECT_FOLDER}/generated" -type f -exec chmod g+w {} +
-    find "${PROJECT_FOLDER}/generated" -type d -exec chmod g+ws {} +
-fi
-if [ -d "${PROJECT_FOLDER}/storage" ]; then
-    find "${PROJECT_FOLDER}/storage" -type f -exec chmod g+w {} +
-    find "${PROJECT_FOLDER}/storage" -type d -exec chmod g+ws {} +
-fi
-if [ -d "${PROJECT_FOLDER}/bootstrap/cache" ]; then
-    find "${PROJECT_FOLDER}/bootstrap/cache" -type f -exec chmod g+w {} +
-    find "${PROJECT_FOLDER}/bootstrap/cache" -type d -exec chmod g+ws {} +
-fi
-if [ -e "${PROJECT_FOLDER}/bin/magento" ]; then
-    chmod u+x "${PROJECT_FOLDER}/bin/magento"
-fi
 
 find "${PROJECT_FOLDER}" -type f -exec chmod 664 {} \;
 find "${PROJECT_FOLDER}" -type d -exec chmod 775 {} \;
+
+if [ -e "${PROJECT_FOLDER}/bin" ]; then
+    find "${PROJECT_FOLDER}/bin" -type f -exec chmod +x {} \;
+fi
+
+if [ -d "${PROJECT_FOLDER}/vendor/bin" ]; then
+    find "${PROJECT_FOLDER}/vendor/bin" -type f -exec chmod +x {} \;
+fi
 
 kill ${pid}
 printf "\n%sDone!%s" "${FMT_BOLD}${FMT_BLUE}" "${FMT_RESET}"
